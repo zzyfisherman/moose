@@ -42,6 +42,7 @@
 #include "OutputWarehouse.h"
 #include "MooseApp.h"
 #include "PetscSupport.h"
+#include "XFEM.h"
 
 class DisplacedProblem;
 
@@ -108,6 +109,9 @@ public:
   FEProblem(const InputParameters & parameters);
   FEProblem(const std::string & deprecated_name, InputParameters parameters); // DEPRECATED CONSTRUCTOR
   virtual ~FEProblem();
+
+  void addXFEMGeometricCuts(InputParameters parameters);
+  XFEM * get_xfem(){return &_xfem;}
 
   virtual EquationSystems & es() { return _eq; }
   virtual MooseMesh & mesh() { return _mesh; }
@@ -778,6 +782,7 @@ public:
   // Adaptivity /////
   Adaptivity & adaptivity() { return _adaptivity; }
   virtual void adaptMesh();
+  virtual void xfemUpdateMesh();
 #endif //LIBMESH_ENABLE_AMR
   virtual void meshChanged();
 
@@ -994,6 +999,8 @@ protected:
 #ifdef LIBMESH_ENABLE_AMR
   Adaptivity _adaptivity;
 #endif
+
+  XFEM _xfem;
 
   // Displaced mesh /////
   MooseMesh * _displaced_mesh;
