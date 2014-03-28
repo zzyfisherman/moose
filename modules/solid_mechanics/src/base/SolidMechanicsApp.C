@@ -37,6 +37,7 @@
 #include "InteractionIntegral.h"
 #include "InteractionIntegralAuxFields.h"
 #include "MixedModeEquivalentK.h"
+#include "XFEMMaterialTensorMarkerUserObject.h"
 #include "MaterialSymmElasticityTensorAux.h"
 #include "MaterialTensorAux.h"
 #include "MaterialTensorOnLine.h"
@@ -196,6 +197,8 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerUserObject(MaterialTensorOnLine);
   registerUserObject(CavityPressureUserObject);
   registerUserObject(CrackFrontDefinition);
+
+  registerUserObject(XFEMMaterialTensorMarkerUserObject);
 
 #undef registerObject
 #define registerObject(name) factory.regLegacy<name>(stringifyName(name))
