@@ -30,6 +30,7 @@
 #include "CrackFrontDefinition.h"
 #include "InteractionIntegral.h"
 #include "InteractionIntegralAuxFields.h"
+#include "XFEMMaterialTensorMarkerUserObject.h"
 #include "MaterialSymmElasticityTensorAux.h"
 #include "MaterialTensorAux.h"
 #include "MaterialTensorOnLine.h"
@@ -169,6 +170,7 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerUserObject(MaterialTensorOnLine);
   registerUserObject(CavityPressureUserObject);
   registerUserObject(CrackFrontDefinition);
+  registerUserObject(XFEMMaterialTensorMarkerUserObject);
 }
 
 void
