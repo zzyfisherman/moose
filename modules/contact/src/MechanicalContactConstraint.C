@@ -126,6 +126,15 @@ MechanicalContactConstraint::updateContactSet(bool beginning_of_step)
     if ( ! pinfo || pinfo->_node->n_comp(_sys.number(), _vars(_component)) < 1 )
       continue;
 
+    //BWS hack to let nodes go along line
+    bool release_hack = false;
+    if ((*pinfo->_node)(0) < 5.5 + 20.0*(_t-0.05) - 0.51)
+    {
+      pinfo->release();
+      pinfo->_contact_force.zero();
+      continue;
+    }
+
     if (beginning_of_step)
     {
       pinfo->_locked_this_step = 0;
