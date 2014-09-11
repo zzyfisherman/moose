@@ -44,6 +44,15 @@
 #include "CrystalPlasticitySlipSysAux.h"
 #include "CrystalPlasticityRotationOutAux.h"
 
+#include "ACFracBulkRate.h"
+#include "ACFracIntVar.h"
+#include "ACFracCoupledInterface.h"
+#include "LinearElasticPFDamage.h"
+#include "ACFracBulkRateMaterial.h"
+#include "ACFracInterfaceRateMaterial.h"
+
+
+
 template<>
 InputParameters validParams<TensorMechanicsApp>()
 {
@@ -83,6 +92,9 @@ TensorMechanicsApp::registerObjects(Factory & factory)
   registerKernel(StressDivergenceTensors);
   registerKernel(CosseratStressDivergenceTensors);
   registerKernel(MomentBalancing);
+  registerKernel(ACFracBulkRate);
+  registerKernel(ACFracIntVar);
+  registerKernel(ACFracCoupledInterface);
 
   registerMaterial(LinearElasticMaterial);
   registerMaterial(FiniteStrainElasticMaterial);
@@ -95,6 +107,9 @@ TensorMechanicsApp::registerObjects(Factory & factory)
   registerMaterial(ElementPropertyReadFileTest);
   registerMaterial(TwoPhaseStressMaterial);
   registerMaterial(SimpleEigenStrainMaterial);
+  registerMaterial(LinearElasticPFDamage);
+  registerMaterial(ACFracBulkRateMaterial);
+  registerMaterial(ACFracInterfaceRateMaterial);
 
   registerUserObject(TensorMechanicsPlasticSimpleTester);
   registerUserObject(TensorMechanicsPlasticTensile);
