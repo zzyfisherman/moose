@@ -226,6 +226,8 @@
 #include "Terminator.h"
 #endif
 #include "XFEMMarkerUserObject.h"
+#include "ElementIsocontour.h" // ZZY
+#include "MedialAxis2D.h" // ZZY
 
 // preconditioners
 #include "PhysicsBasedPreconditioner.h"
@@ -619,6 +621,8 @@ registerObjects(Factory & factory)
   registerUserObject(Terminator);
 #endif
   registerUserObject(XFEMMarkerUserObject);
+  registerUserObject(ElementIsocontour); // ZZY
+  registerUserObject(MedialAxis2D); // ZZY
 
   // preconditioners
   registerNamedPreconditioner(PhysicsBasedPreconditioner, "PBP");
