@@ -78,7 +78,7 @@
 #include "TrussMaterial.h"
 #include "RateDepSmearCrackModel.h"
 #include "RateDepSmearIsoCrackModel.h"
-
+#include "CutPlaneAction.h"
 
 template<>
 InputParameters validParams<SolidMechanicsApp>()
@@ -232,6 +232,9 @@ SolidMechanicsApp::associateSyntax(Syntax & syntax, ActionFactory & action_facto
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_vector_postprocessor");
   syntax.registerActionSyntax("DomainIntegralAction", "DomainIntegral","add_material");
 
+  syntax.registerActionSyntax("CutPlaneAction", "CutPlanes","add_aux_variable");
+  syntax.registerActionSyntax("CutPlaneAction", "CutPlanes","add_aux_kernel");
+
   registerAction(PressureAction, "add_bc");
   registerAction(DisplacementAboutAxisAction, "add_bc");
   registerAction(CavityPressureAction, "add_bc");
@@ -243,6 +246,9 @@ SolidMechanicsApp::associateSyntax(Syntax & syntax, ActionFactory & action_facto
   registerAction(DomainIntegralAction, "add_aux_kernel");
   registerAction(DomainIntegralAction, "add_postprocessor");
   registerAction(DomainIntegralAction, "add_material");
+
+  registerAction(CutPlaneAction, "add_aux_variable");
+  registerAction(CutPlaneAction, "add_aux_kernel");
 
 #undef registerAction
 #define registerAction(tplt, action) action_factory.regLegacy<tplt>(stringifyName(tplt), action)
