@@ -3,7 +3,10 @@
 
 #include <cmath>
 
-extern "C" void dsyev_ ( ... );
+//extern "C" void dsyev_ ( ... );
+#if !defined(LIBMESH_HAVE_PETSC)
+  extern "C" void FORTRAN_CALL(dsyev) ( ... );
+#endif
 
 template<>
 InputParameters validParams<LinearElasticPFDamage>()
@@ -150,7 +153,7 @@ void LinearElasticPFDamage::update_var(RankTwoTensor &strain)
   if (_form_type == 0) //Miehe et. al. (only for Isotropic Elasticity)
   {
     RankTwoTensor etens1, etens2, etens3;
-    Real cmat[3][3], w[3], work[20];
+    Real cmat[9], w[3], work[20];
     int info;
     int nd=3;
     int lwork=20;
@@ -167,16 +170,19 @@ void LinearElasticPFDamage::update_var(RankTwoTensor &strain)
 
     for (unsigned int i = 0; i < 3; ++i)
       for (unsigned int j = 0; j < 3; ++j)
-        cmat[i][j] = strain(i,j);
+        cmat[3*i+j] = strain(i,j);
 
-
-    dsyev_("V","U",&nd,cmat,&nd,&w,&work,&lwork,&info);
+#if !defined(LIBMESH_HAVE_PETSC)
+    FORTRAN_CALL(dsyev)("V","U",&nd,cmat,&nd,w,work,&lwork,&info);
+#else
+    LAPACKsyev_("V","U",&nd,cmat,&nd,w,work,&lwork,&info);
+#endif
 
     for (int i=0;i <3; i++)
     {
-      evec1[i]=cmat[0][i];
-      evec2[i]=cmat[1][i];
-      evec3[i]=cmat[2][i];
+      evec1[i]=cmat[3*0+i];
+      evec2[i]=cmat[3*1+i];
+      evec3[i]=cmat[3*2+i];
     }
 
 
@@ -274,7 +280,7 @@ void LinearElasticPFDamage::calc_num_jac(RankTwoTensor &strain0)
         strain(le,ke) = strain(ke,le);
 
         RankTwoTensor etens1, etens2, etens3;
-        Real cmat[3][3], w[3], work[20];
+        Real cmat[9], w[3], work[20];
         int info;
         int nd=3;
         int lwork=20;
@@ -286,15 +292,19 @@ void LinearElasticPFDamage::calc_num_jac(RankTwoTensor &strain0)
 
         for (unsigned int i = 0; i < 3; ++i)
           for (unsigned int j = 0; j < 3; ++j)
-            cmat[i][j] = strain(i,j);
+            cmat[3*i+j] = strain(i,j);
 
-        dsyev_("V","U",&nd,cmat,&nd,&w,&work,&lwork,&info);
+#if !defined(LIBMESH_HAVE_PETSC)
+        FORTRAN_CALL(dsyev)("V","U",&nd,cmat,&nd,w,work,&lwork,&info);
+#else
+        LAPACKsyev_("V","U",&nd,cmat,&nd,w,work,&lwork,&info);
+#endif
 
         for (unsigned int i = 0; i < 3; ++i)
         {
-          evec1[i] = cmat[0][i];
-          evec2[i] = cmat[1][i];
-          evec3[i] = cmat[2][i];
+          evec1[i] = cmat[3*0+i];
+          evec2[i] = cmat[3*1+i];
+          evec3[i] = cmat[3*2+i];
         }
 
         for (unsigned int i = 0; i < 3; ++i)
