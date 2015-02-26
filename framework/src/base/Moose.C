@@ -236,6 +236,9 @@
 #include "DGDiffusion.h"
 #include "DGFunctionDiffusionDirichletBC.h"
 
+// Nitsche's method for diffusion equations for BC
+#include "DiffusionNitschesBC.h"
+
 // Constraints
 #include "TiedValueConstraint.h"
 #include "CoupledTiedValueConstraint.h"
@@ -599,6 +602,8 @@ registerObjects(Factory & factory)
   // DG
   registerDGKernel(DGDiffusion);
   registerBoundaryCondition(DGFunctionDiffusionDirichletBC);
+  // Nitsches BC
+  registerBoundaryCondition(DiffusionNitschesBC);
 
   // Constraints
   registerConstraint(TiedValueConstraint);
