@@ -43,8 +43,6 @@ private:
   const unsigned _dim;
   const MaterialProperty<Real> & _diffusion_coefficient;
   const MaterialProperty<Real> * const _diffusion_coefficient_dT;
-  bool _has_xfem_volfrac;
-  VariableValue & _xfem_volfrac;
 };
 
 #endif //HEATCONDUCTIONKERNEL_H
