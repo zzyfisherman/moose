@@ -107,6 +107,9 @@ public:
   bool is_elem_cut(const Elem* elem) const;
   void get_frag_faces(const Elem* elem, std::vector<std::vector<Point> > &frag_faces,
                       bool displaced_mesh = false) const;
+  void get_frag_values(const Elem* elem, std::vector<Real> &elem_node_vals,
+                       std::vector<Real> &frag_node_vals) const;
+  void get_frag_node_ids(const Elem* elem, std::vector<int> &frag_node_ids) const;
 
 private:
 

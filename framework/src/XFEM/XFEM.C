@@ -1007,6 +1007,30 @@ XFEM::get_frag_faces(const Elem* elem, std::vector<std::vector<Point> > &frag_fa
 }
 
 void
+XFEM::get_frag_values(const Elem* elem, std::vector<Real> &elem_node_vals, std::vector<Real> &frag_node_vals) const
+{
+  std::map<const Elem*, XFEMCutElem*>::const_iterator it;
+  it = _cut_elem_map.find(elem);
+  if (it != _cut_elem_map.end())
+  {
+    const XFEMCutElem *xfce = it->second;
+    xfce->get_frag_values(elem_node_vals, frag_node_vals);
+  }
+}
+
+void
+XFEM::get_frag_node_ids(const Elem* elem, std::vector<int> &frag_node_ids) const
+{
+  std::map<const Elem*, XFEMCutElem*>::const_iterator it;
+  it = _cut_elem_map.find(elem);
+  if (it != _cut_elem_map.end())
+  {
+    const XFEMCutElem *xfce = it->second;
+    xfce->get_frag_node_ids(frag_node_ids);
+  }
+}
+
+void
 XFEM::get_frag_edges(const Elem* elem, EFAelement2D* CEMElem, std::vector<std::vector<Point> > &frag_edges) const
 {
   // N.B. CEMElem here has global EFAnode

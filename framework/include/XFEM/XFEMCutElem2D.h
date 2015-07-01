@@ -40,6 +40,8 @@ public:
   virtual void get_frag_faces(std::vector<std::vector<Point> > &frag_faces, MeshBase* displaced_mesh=NULL) const;
   virtual const EFAelement * get_efa_elem() const;
   virtual unsigned int num_cut_planes() const;
+  virtual void get_frag_values(std::vector<Real> &elem_vals, std::vector<Real> &frag_vals) const;
+  virtual void get_frag_node_ids(std::vector<int> &frag_node_ids) const;
 
 private:
 
