@@ -185,6 +185,39 @@ XFEMCutElem2D::num_cut_planes() const
   return counter;
 }
 
+void
+XFEMCutElem2D::get_frag_values(std::vector<Real> &elem_vals, std::vector<Real> &frag_vals) const
+{
+  if (_efa_elem2d.num_nodes() != elem_vals.size())
+    mooseError("elem_vals.size() must be equal to number of elem nodes");
+  unsigned int n_frag_nodes = _efa_elem2d.get_fragment(0)->num_edges();
+  frag_vals.resize(n_frag_nodes, 0.0);
+  for (unsigned int i = 0; i < n_frag_nodes; ++i)
+  {
+    EFAnode* frag_node = _efa_elem2d.get_frag_edge(0,i)->get_node(0);
+    std::vector<EFAnode*> master_nodes;
+    std::vector<double> master_weights;
+    _efa_elem2d.getMasterInfo(frag_node, master_nodes, master_weights);
+    for (unsigned int j = 0; j < master_nodes.size(); ++j)
+      frag_vals[i] += master_weights[j]*elem_vals[master_nodes[j]->id()];// N.B master_nodes are N_CATEGORY_LOCAL_INDEX
+  } // i
+}
+
+void
+XFEMCutElem2D::get_frag_node_ids(std::vector<int> &frag_node_ids) const
+{
+  unsigned int n_frag_nodes = _efa_elem2d.get_fragment(0)->num_edges();
+  frag_node_ids.clear();
+  for (unsigned int i = 0; i < n_frag_nodes; ++i)
+  {
+    EFAnode* frag_node = _efa_elem2d.get_frag_edge(0,i)->get_node(0);
+    if (frag_node->category() == N_CATEGORY_EMBEDDED)
+      frag_node_ids.push_back(-frag_node->id()-1); // negative number if emb node
+    else // frag_node is N_CATEGORY_LOCAL
+      frag_node_ids.push_back((_nodes[frag_node->id()])->id()); // libmesh node id if local node
+  } // i
+}
+
 // ****** moment-fitting private methods ******
 void
 XFEMCutElem2D::new_weight_mf(unsigned int nen, unsigned int nqp, std::vector<Point> &elem_nodes,

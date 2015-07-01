@@ -79,6 +79,7 @@
 #include "RateDepSmearCrackModel.h"
 #include "RateDepSmearIsoCrackModel.h"
 #include "CutPlaneAction.h"
+#include "XFEMOutputs.h"
 
 template<>
 InputParameters validParams<SolidMechanicsApp>()
@@ -199,6 +200,7 @@ SolidMechanicsApp::registerObjects(Factory & factory)
   registerUserObject(CrackFrontDefinition);
 
   registerUserObject(XFEMMaterialTensorMarkerUserObject);
+  registerUserObject(XFEMOutputs);
 
 #undef registerObject
 #define registerObject(name) factory.regLegacy<name>(stringifyName(name))

@@ -208,6 +208,20 @@ XFEMCutElem3D::num_cut_planes() const
   return counter;
 }
 
+void
+XFEMCutElem3D::get_frag_values(std::vector<Real> &elem_vals, std::vector<Real> &frag_vals) const
+{
+  // TODO: need to finish this in the future
+  mooseError("not available for XFEMCutElem3D for now");
+}
+
+void
+XFEMCutElem3D::get_frag_node_ids(std::vector<int> &frag_node_ids) const
+{
+  // TODO: need to finish this in the future
+  mooseError("not available for XFEMCutElem3D for now");
+}
+
 // ****** private geometry toolkit ******
 double
 XFEMCutElem3D::polyhedron_volume_3d(double coord[], int order_max, int face_num,
