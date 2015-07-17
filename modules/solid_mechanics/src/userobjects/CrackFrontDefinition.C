@@ -182,6 +182,9 @@ CrackFrontDefinition::initialSetup()
 void
 CrackFrontDefinition::initialize()
 {
+  // ZZY HACKS to make crack_front_points a function of time
+  if (_crack_front_points.size() > 0)
+    _crack_front_points[0](0) = 5.5 + 20.0*(_t-0.05) - 0.5;
 }
 
 void
