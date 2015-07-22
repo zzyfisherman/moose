@@ -4114,6 +4114,8 @@ FEProblem::FEProblem(const std::string & deprecated_name, InputParameters parame
 #ifdef LIBMESH_ENABLE_AMR
     _adaptivity(*this),
 #endif
+    _xfem(_material_data, &_mesh.getMesh()),
+    _XFEM_cut_type(getParam<std::string>("XFEM_cut_type")),
     _displaced_mesh(NULL),
     _displaced_problem(NULL),
     _geometric_search_data(*this, _mesh),
