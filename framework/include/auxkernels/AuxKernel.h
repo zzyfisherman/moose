@@ -191,6 +191,11 @@ protected:
   DenseVector<Number> _local_sol;
   /// for holding local mass matrix
   DenseMatrix<Number> _local_ke;
+  /// ZZY HAKCS to take care of the averaging with XFEM
+  XFEM* _xfem;
+  std::string _xfem_qrule;
+  std::vector<Real> _xfem_weights;
+  void get_xfem_weights(std::vector<Real> & _xfem_weights);
 };
 
 template<typename T>
