@@ -45,7 +45,7 @@ InputParameters validParams<AuxKernel>()
   params.addPrivateParam<bool>("_on_boundary", false);
 
   params.registerBase("AuxKernel");
-
+  params.addParam<std::string>("xfem_qrule", "none", "The type of XFEM quadrature rule"); // ZZY HACKS
   return params;
 }
 
@@ -96,7 +96,8 @@ AuxKernel::AuxKernel(const InputParameters & parameters) :
 
     _current_node(_var.node()),
 
-    _solution(_aux_sys.solution())
+    _solution(_aux_sys.solution()),
+    _xfem_qrule(getParam<std::string>("xfem_qrule")) // ZZY HACKS
 {
   _supplied_vars.insert(parameters.get<AuxVariableName>("variable"));
 
@@ -104,6 +105,13 @@ AuxKernel::AuxKernel(const InputParameters & parameters) :
   for (std::map<std::string, std::vector<MooseVariable *> >::iterator it = coupled_vars.begin(); it != coupled_vars.end(); ++it)
     for (std::vector<MooseVariable *>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
       _depend_vars.insert((*it2)->name());
+
+  // ZZY HACKS to grab XFEM object
+  FEProblem * fe_problem = dynamic_cast<FEProblem *>(&_subproblem);
+  if (fe_problem != NULL)
+    _xfem = fe_problem->get_xfem();
+  else
+   _xfem = NULL;
 }
 
 AuxKernel::~AuxKernel()
@@ -174,9 +182,20 @@ AuxKernel::compute()
     if (_n_local_dofs==1)  /* p0 */
     {
       Real value = 0;
-      for (_qp=0; _qp<_qrule->n_points(); _qp++)
-        value += _JxW[_qp]*_coord[_qp]*computeValue();
-      value /= (_bnd ? _current_side_volume : _current_elem_volume);
+      if (_xfem_qrule != "none" && _xfem != NULL) // user specified XFEM quadrature rule (ZZY HACKS)
+      {
+        get_xfem_weights(_xfem_weights);
+        Real vol_frac = _xfem->get_elem_phys_volfrac(_current_elem);
+        for (_qp=0; _qp<_qrule->n_points(); _qp++)
+          value += _JxW[_qp]*_coord[_qp]*computeValue()*_xfem_weights[_qp];
+        value /= (_bnd ? _current_side_volume : (_current_elem_volume*vol_frac));
+      }
+      else
+      {
+        for (_qp=0; _qp<_qrule->n_points(); _qp++)
+          value += _JxW[_qp]*_coord[_qp]*computeValue();
+        value /= (_bnd ? _current_side_volume : _current_elem_volume);
+      }
       // update the variable data refernced by other kernels.
       // Note that this will update the values at the quadrature points too
       // (because this is an Elemental variable)
@@ -263,7 +282,8 @@ AuxKernel::AuxKernel(const std::string & deprecated_name, InputParameters parame
 
     _current_node(_var.node()),
 
-    _solution(_aux_sys.solution())
+    _solution(_aux_sys.solution()),
+    _xfem_qrule(getParam<std::string>("xfem_qrule")) // ZZY HACKS
 {
   _supplied_vars.insert(parameters.get<AuxVariableName>("variable"));
 
@@ -271,4 +291,28 @@ AuxKernel::AuxKernel(const std::string & deprecated_name, InputParameters parame
   for (std::map<std::string, std::vector<MooseVariable *> >::iterator it = coupled_vars.begin(); it != coupled_vars.end(); ++it)
     for (std::vector<MooseVariable *>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
       _depend_vars.insert((*it2)->name());
+
+  // ZZY HACKS to grab XFEM object
+  FEProblem * fe_problem = dynamic_cast<FEProblem *>(&_subproblem);
+  if (fe_problem != NULL)
+    _xfem = fe_problem->get_xfem();
+  else
+    _xfem = NULL;
+}
+
+void
+AuxKernel::get_xfem_weights(std::vector<Real> & _xfem_weights)
+{
+  _xfem_weights.resize(_qrule->n_points(), 1.0);
+  for (_qp = 0; _qp < _qrule->n_points(); _qp++)
+  {
+    if (_xfem_qrule == "volfrac")
+      _xfem_weights[_qp] = _xfem->get_elem_phys_volfrac(_current_elem);
+    else if (_xfem_qrule == "moment_fitting")
+      _xfem_weights[_qp] = _xfem->get_elem_new_weights(_current_elem, _qp);
+    else if (_xfem_qrule == "direct") // remove q-points outside the elem real domain by force
+      _xfem_weights[_qp] = _xfem->flag_qp_inside(_current_elem, _q_point[_qp]);
+    else
+      mooseError("unrecognized XFEM qrule option!");
+  }
 }
