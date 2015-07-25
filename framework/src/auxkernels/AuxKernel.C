@@ -46,6 +46,7 @@ InputParameters validParams<AuxKernel>()
 
   params.registerBase("AuxKernel");
   params.addParam<std::string>("xfem_qrule", "none", "The type of XFEM quadrature rule"); // ZZY HACKS
+  params.addParam<bool>("print_aux", false, "ZZY HACKS to dump out aux variables");
   return params;
 }
 
@@ -97,7 +98,8 @@ AuxKernel::AuxKernel(const InputParameters & parameters) :
     _current_node(_var.node()),
 
     _solution(_aux_sys.solution()),
-    _xfem_qrule(getParam<std::string>("xfem_qrule")) // ZZY HACKS
+    _xfem_qrule(getParam<std::string>("xfem_qrule")), // ZZY HACKS
+    _print(getParam<bool>("print_aux")) // ZZY HACKS
 {
   _supplied_vars.insert(parameters.get<AuxVariableName>("variable"));
 
@@ -179,6 +181,7 @@ AuxKernel::compute()
   {
     _n_local_dofs = _var.numberOfDofs();
 
+    std::vector<Real> qp_vals(_qrule->n_points(), 0.0); // ZZY HACKS
     if (_n_local_dofs==1)  /* p0 */
     {
       Real value = 0;
@@ -187,19 +190,27 @@ AuxKernel::compute()
         get_xfem_weights(_xfem_weights);
         Real vol_frac = _xfem->get_elem_phys_volfrac(_current_elem);
         for (_qp=0; _qp<_qrule->n_points(); _qp++)
-          value += _JxW[_qp]*_coord[_qp]*computeValue()*_xfem_weights[_qp];
+        {
+          qp_vals[_qp] = computeValue();
+          value += _JxW[_qp]*_coord[_qp]*qp_vals[_qp]*_xfem_weights[_qp];
+        }
         value /= (_bnd ? _current_side_volume : (_current_elem_volume*vol_frac));
       }
       else
       {
         for (_qp=0; _qp<_qrule->n_points(); _qp++)
-          value += _JxW[_qp]*_coord[_qp]*computeValue();
+        {
+          qp_vals[_qp] = computeValue();
+          value += _JxW[_qp]*_coord[_qp]*qp_vals[_qp];
+        }
         value /= (_bnd ? _current_side_volume : _current_elem_volume);
       }
       // update the variable data refernced by other kernels.
       // Note that this will update the values at the quadrature points too
       // (because this is an Elemental variable)
       _var.setNodalValue(value);
+      if (_print && _t_step == 20) // ZZY HACKS
+        printAuxValue(value, qp_vals);
     }
     else                   /* high-order */
     {
@@ -314,5 +325,43 @@ AuxKernel::get_xfem_weights(std::vector<Real> & _xfem_weights)
       _xfem_weights[_qp] = _xfem->flag_qp_inside(_current_elem, _q_point[_qp]);
     else
       mooseError("unrecognized XFEM qrule option!");
+  }
+}
+
+void
+AuxKernel::printAuxValue(Real value, std::vector<Real> &qp_vals)
+{
+  bool print_flag = false;
+  Point elem_center(0.0,0.0,0.0);
+  Real criteria_y = 0.0; // changeable
+//  Real qp_y = 0.394338; // changeable
+  for (unsigned int i = 0; i < _current_elem->n_nodes(); ++i)
+  {
+    Node* node = _current_elem->get_node(i);
+    elem_center += (*node);
+  }
+  elem_center *= (1.0/_current_elem->n_nodes());
+  if (std::abs(elem_center(1) - criteria_y) < 1.0e-3)
+  {
+    if (_xfem != NULL && _xfem->is_elem_cut(_current_elem))
+    {
+      std::vector<std::vector<Point> > frag_edges;
+      _xfem->get_frag_faces(_current_elem, frag_edges);
+      Real frag_center_y = 0.0;
+      for (unsigned int i = 0; i < frag_edges.size(); ++i)
+        frag_center_y += frag_edges[i][0](1);
+      frag_center_y /= frag_edges.size();
+      if (frag_center_y > 0.0) print_flag = true;
+    }
+    else
+      print_flag = true;
+  }
+  if (print_flag)
+  {
+    std::cout << _current_elem->id() << ", " << elem_center(0) << ", " << value;
+//    for (unsigned int i = 0; i < qp_vals.size(); ++i)
+//      if (std::abs(_q_point[i](1) - qp_y) < 1.0e-3)
+//        std::cout << ",  " << _q_point[i](0) << ", " << qp_vals[i];
+    std::cout << std::endl;
   }
 }
