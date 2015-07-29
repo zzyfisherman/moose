@@ -34,6 +34,7 @@
 
 #include "XFEM.h"
 #include "XFEM_geometric_cut.h"
+#include "XFEM_geometric_cut_2d.h"
 #include "EFAfuncs.h"
 
 #ifdef DEBUG
@@ -43,8 +44,9 @@
 #endif // DEBUG
 
 // XFEM mesh modification methods
-XFEM::XFEM (std::vector<MaterialData *> & material_data, MeshBase* m, MeshBase* m2) :
+XFEM::XFEM (std::vector<MaterialData *> & material_data, bool cut_multiple_elems, MeshBase* m, MeshBase* m2) :
   _material_data(material_data),
+  _cut_multiple_elems(cut_multiple_elems),
   _mesh(m),
   _mesh2(m2)
 {
@@ -298,12 +300,15 @@ XFEM::mark_cut_edges_by_geometry(Real time)
 {
   bool marked_edges = false;
 
-  MeshBase::element_iterator       elem_it  = _mesh->elements_begin();
-  const MeshBase::element_iterator elem_end = _mesh->elements_end();
+  // Find appropriate elements to be marked
+  std::set<const Elem*> mark_elems;
+  getElemsToBeMarked(mark_elems, time);
 
-  for ( ; elem_it != elem_end; ++elem_it)
+  // Mark elements
+  std::set<const Elem*>::iterator eit;
+  for (eit = mark_elems.begin(); eit != mark_elems.end(); ++eit)
   {
-    const Elem *elem = *elem_it;
+    const Elem *elem = *eit;
     std::vector<cutEdge> elemCutEdges;
     std::vector<cutEdge> fragCutEdges;
     std::vector<std::vector<Point> > frag_edges;
@@ -1065,6 +1070,80 @@ XFEM::get_frag_faces(const Elem* elem, EFAelement3D* CEMElem, std::vector<std::v
       for (unsigned int j = 0; j < num_face_nodes; ++j)
         p_line[j] = get_efa_node_coor(CEMElem->get_frag_face(0,i)->get_node(j), CEMElem, elem);
       frag_faces.push_back(p_line);
+    } // i
+  }
+}
+
+void
+XFEM::getElemsToBeMarked(std::set<const Elem*> & mark_elems, Real time)
+{
+  mark_elems.clear();
+  if (_cut_multiple_elems)
+  {
+    MeshBase::element_iterator elem_it = _mesh->elements_begin();
+    for (elem_it = _mesh->elements_begin(); elem_it != _mesh->elements_end(); ++elem_it)
+      mark_elems.insert(*elem_it);
+  }
+  else
+  {
+    for (unsigned int i = 0; i < _geometric_cuts.size(); ++i)
+    {
+      XFEM_geometric_cut_2d *cut_2d = dynamic_cast<XFEM_geometric_cut_2d*>(_geometric_cuts[i]);
+      if (!cut_2d) mooseError("_geometric_cuts[i] is not of type XFEM_geometric_cut_2d");
+
+      // collect all elems passed by this cut
+      std::vector<const Elem*> passed_elems;
+      MeshBase::element_iterator elem_it = _mesh->elements_begin();
+      for (elem_it = _mesh->elements_begin(); elem_it != _mesh->elements_end(); ++elem_it)
+      {
+        const Elem *elem = *elem_it;
+        if (cut_2d->doesPassElem(elem, time))
+          passed_elems.push_back(elem);
+      }
+
+      // primitively get crack tip elements from passed_elems
+      std::vector<const Elem*> crack_tip_elems;
+      for (unsigned int j = 0; j < passed_elems.size(); ++j)
+        if (is_elem_at_crack_tip(passed_elems[j]))
+          crack_tip_elems.push_back(passed_elems[j]);
+
+      // find crack tip elements by force
+      bool find_tip_by_force = false;
+      if (crack_tip_elems.empty())
+        for (unsigned int j = 0; j < passed_elems.size(); ++j)
+          if (!is_elem_cut(passed_elems[j]))
+            find_tip_by_force = true;
+
+      if (find_tip_by_force)
+      {
+        // find element that contains the first end-point
+        for (unsigned int j = 0; j < passed_elems.size(); ++j)
+          if (cut_2d->isFirstPointInElem(passed_elems[j]))
+            crack_tip_elems.push_back(passed_elems[j]);
+
+        // find element that's closest to the first end-point
+        if (crack_tip_elems.empty())
+        {
+          Real d_min = 1.0e20;
+          for (unsigned int j = 0; j < passed_elems.size(); ++j)
+          {
+            Real dist = cut_2d->distFirstPointToElem(passed_elems[j]);
+            if (dist < d_min) d_min = dist;
+          }
+          for (unsigned int j = 0; j < passed_elems.size(); ++j)
+          {
+            const Elem* elem = passed_elems[j];
+            Real h_char = std::sqrt(elem->volume());
+            Real dist = cut_2d->distFirstPointToElem(elem);
+            if (std::abs(dist-d_min)/h_char < 1.0e-8) // dist <= d_min
+              crack_tip_elems.push_back(elem);
+          } // j
+        }
+      }
+
+      // save crack_tip_elems to mark_elems
+      for (unsigned int j = 0; j < crack_tip_elems.size(); ++j)
+        mark_elems.insert(crack_tip_elems[j]);
     } // i
   }
 }
