@@ -101,6 +101,7 @@ InputParameters validParams<FEProblem>()
   params.addParam<bool>("use_nonlinear", true, "Determines whether to use a Nonlinear vs a Eigenvalue system (Automatically determined based on executioner)");
   params.addParam<bool>("error_on_jacobian_nonzero_reallocation", false, "This causes PETSc to error if it had to reallocate memory in the Jacobian matrix due to not having enough nonzeros");
 
+  params.addParam<bool>("cut_multiple_elems", true, "if cutting multiple elements at a time is allowed");
   params.addParam<std::string>("XFEM_cut_type", "line_segment_2d", "The type of XFEM cuts");
   params.addParam<std::vector<Real> >("XFEM_cuts","Data for XFEM geometric cuts");
   params.addParam<std::vector<Real> >("XFEM_cut_scale","X,Y scale factors for XFEM geometric cuts");
@@ -133,7 +134,7 @@ FEProblem::FEProblem(const InputParameters & parameters) :
 #ifdef LIBMESH_ENABLE_AMR
     _adaptivity(*this),
 #endif
-    _xfem(_material_data, &_mesh.getMesh()),
+    _xfem(_material_data, getParam<bool>("cut_multiple_elems"), &_mesh.getMesh()),
     _XFEM_cut_type(getParam<std::string>("XFEM_cut_type")),
     _displaced_mesh(NULL),
     _displaced_problem(NULL),
@@ -4121,7 +4122,7 @@ FEProblem::FEProblem(const std::string & deprecated_name, InputParameters parame
 #ifdef LIBMESH_ENABLE_AMR
     _adaptivity(*this),
 #endif
-    _xfem(_material_data, &_mesh.getMesh()),
+    _xfem(_material_data, getParam<bool>("cut_multiple_elems"), &_mesh.getMesh()),
     _XFEM_cut_type(getParam<std::string>("XFEM_cut_type")),
     _displaced_mesh(NULL),
     _displaced_problem(NULL),

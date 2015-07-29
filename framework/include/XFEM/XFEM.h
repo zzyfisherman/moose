@@ -49,7 +49,8 @@ public:
    * Constructor
    */
   explicit
-  XFEM(std::vector<MaterialData *> & material_data, MeshBase* mesh, MeshBase* mesh2=NULL);
+  XFEM(std::vector<MaterialData *> & material_data, bool cut_multiple_elems,
+       MeshBase* mesh, MeshBase* mesh2=NULL);
 
   /**
    * Destructor
@@ -117,9 +118,11 @@ private:
                       std::vector<std::vector<Point> > &frag_edges) const;
   void get_frag_faces(const Elem* elem, EFAelement3D* CEMElem,
                       std::vector<std::vector<Point> > &frag_faces) const;
+  void getElemsToBeMarked(std::set<const Elem*> & mark_elems, Real time);
 
 private:
   std::vector<MaterialData *> & _material_data;
+  bool _cut_multiple_elems;
 
   /**
    * Reference to the mesh.

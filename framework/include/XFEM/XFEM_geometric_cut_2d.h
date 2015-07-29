@@ -31,6 +31,9 @@ public:
                             std::vector<cutEdge> & cutEdges, Real time);
   virtual bool cut_frag_by_geometry(std::vector<std::vector<Point> > & frag_faces,
                             std::vector<cutFace> & cutFaces, Real time);
+  bool isFirstPointInElem(const Elem* elem);
+  Real distFirstPointToElem(const Elem* elem);
+  bool doesPassElem(const Elem* elem, Real time);
 
 private:
   Real x0, x1, y0, y1;
