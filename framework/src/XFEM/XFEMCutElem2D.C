@@ -338,11 +338,17 @@ XFEMCutElem2D::solve_mf(unsigned int nen, unsigned int nqp, std::vector<Point> &
   wsg.resize(wss.size());
   for (unsigned int i = 0; i < wsg.size(); ++i) wsg[i].resize(3,0.0);
   Real jac = 0.0;
+  std::vector<Real> old_weights(wss.size(),0.0);
 
   for (unsigned int l = 0; l < wsg.size(); ++l)
   {
     shapeFunc2D(nen, wss[l], elem_nodes, shape, jac, true); // Get shape
-    wss[l][2] *= jac; // weights for total element
+    if (nen == 4) // 2D quad elem
+      old_weights[l] = wss[l][2]*jac; // weights for total element
+    else if (nen == 3) // 2D triangle elem
+      old_weights[l] = wss[l][3]*jac;
+    else
+      mooseError("Invalid element!");
     for (unsigned int k = 0; k < nen; ++k) // physical coords of Q-pts
     {
       wsg[l][0] += shape[k][2]*elem_nodes[k](0);
@@ -381,7 +387,7 @@ XFEMCutElem2D::solve_mf(unsigned int nen, unsigned int nqp, std::vector<Point> &
 
   solveLinearSystLU(A, b, wsg.size());
   for (unsigned int i = 0; i < wsg.size(); ++i)
-    wsg[i][2] = b[i]/wss[i][2]; // get the multiplier
+    wsg[i][2] = b[i]/old_weights[i]; // get the multiplier
 
   // delete arrays
   deleteMatrix(A,wsg.size());

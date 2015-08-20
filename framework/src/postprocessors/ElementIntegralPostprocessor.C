@@ -76,7 +76,7 @@ ElementIntegralPostprocessor::computeIntegral()
 //    Real val = (_q_point[_qp](0)/b)*(_q_point[_qp](0)/b) + (_q_point[_qp](1)/a)*(_q_point[_qp](1)/a);
 //    if ((val < 1.0)) inside_flag = 0.0;
 //    sum += _JxW[_qp]*_coord[_qp]*computeQpIntegral()*inside_flag;
-      sum += _JxW[_qp]*_coord[_qp]*computeQpIntegral()*_xfem_weights[_qp];
+    sum += _JxW[_qp]*_coord[_qp]*computeQpIntegral()*_xfem_weights[_qp];
       //std::cout << "xfem_weights[" << _qp << "] =" << _xfem_weights[_qp] << std::endl;
   }
   return sum;
