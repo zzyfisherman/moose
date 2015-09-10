@@ -1,0 +1,65 @@
+/****************************************************************/
+/*               DO NOT MODIFY THIS HEADER                      */
+/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
+/*                                                              */
+/*           (c) 2010 Battelle Energy Alliance, LLC             */
+/*                   ALL RIGHTS RESERVED                        */
+/*                                                              */
+/*          Prepared by Battelle Energy Alliance, LLC           */
+/*            Under Contract No. DE-AC07-05ID14517              */
+/*            With the U. S. Department of Energy               */
+/*                                                              */
+/*            See COPYRIGHT for full restrictions               */
+/****************************************************************/
+
+#include "XFEMAction.h"
+
+#include "FEProblem.h"
+#include "NonlinearSystem.h"
+#include "XFEM.h"
+#include "Executioner.h"
+#include "MooseEnum.h"
+
+// libMesh includes
+#include "libmesh/transient_system.h"
+
+template<>
+InputParameters validParams<XFEMAction>()
+{
+  InputParameters params = validParams<Action>();
+  
+  params.addParam<std::string>("XFEM_cut_type", "line_segment_2d", "The type of XFEM cuts");
+  params.addParam<std::vector<Real> >("XFEM_cuts","Data for XFEM geometric cuts");
+  params.addParam<std::vector<Real> >("XFEM_cut_scale","X,Y scale factors for XFEM geometric cuts");
+  params.addParam<std::vector<Real> >("XFEM_cut_translate","X,Y translations for XFEM geometric cuts");
+
+  return params;
+}
+
+XFEMAction::XFEMAction(InputParameters params) :
+    Action(params)
+{
+}
+
+void
+XFEMAction::act()
+{
+  XFEM* xfem = _problem->get_xfem();
+
+  std::vector<Real> cut_data = getParam<std::vector<Real> >("XFEM_cuts");
+  std::string cut_type = getParam<std::string>("XFEM_cut_type");
+  xfem->set_xfem_cut_type(cut_type);
+  xfem->set_xfem_cut_data(cut_data);
+  std::cout << "xfem cut type = " << xfem->get_cut_type() << std::endl;
+  std::vector<Real> cut_data = xfem->get_cut_data();
+  for(unsigned i = 0; i < cut_data.size(); i++){
+    std::cout << "xfem cut data [ " << i  << "] = " << cut_data[i] << std::endl;
+  }
+}
+
+// DEPRECATED CONSTRUCTOR
+XFEMAction::XFEMAction(const std::string & deprecated_name, InputParameters params) :
+    Action(deprecated_name, params)
+{
+}
+
