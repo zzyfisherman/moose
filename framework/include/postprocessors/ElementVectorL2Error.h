@@ -46,6 +46,7 @@ protected:
   const VariableValue & _u; // FE solution in x
   const VariableValue & _v; // FE solution in y
   const VariableValue & _w; // FE solution in z
+  bool _plate_hole_hack; // ZZY hack
 };
 
 #endif //ELEMENTVECTORL2ERROR_H

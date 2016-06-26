@@ -25,6 +25,7 @@ InputParameters validParams<ElementVectorL2Error>()
   params.addRequiredCoupledVar("var_x","The FE solution in x direction");
   params.addCoupledVar("var_y", 0, "The FE solution in y direction");
   params.addCoupledVar("var_z", 0, "The FE solution in z direction");
+  params.addParam<bool>("plate_hole_hack", false, "Use plate-hole hack or not");
   return params;
 }
 
@@ -35,7 +36,8 @@ ElementVectorL2Error::ElementVectorL2Error(const InputParameters & parameters) :
     _funcz(getFunction("function_z")),
     _u(coupledValue("var_x")),
     _v(coupledValue("var_y")),
-    _w(coupledValue("var_z"))
+    _w(coupledValue("var_z")),
+    _plate_hole_hack(getParam<bool>("plate_hole_hack"))
 {
 }
 
@@ -59,6 +61,10 @@ ElementVectorL2Error::computeQpIntegral()
 
   func_val(1) = _funcy.value(_t, _q_point[_qp]);
   func_val(2) = _funcz.value(_t, _q_point[_qp]);
+
+  // ZZY hack: for the plate-hole test, remove the error contribution from inside the hole
+  if (_plate_hole_hack && (sol_val.norm_sq() < 1.0e-14 && func_val.norm_sq() > 0.0))
+    return 0.0;
 
   return (sol_val - func_val).norm_sq(); // dot product of difference vector
 }
