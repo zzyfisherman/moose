@@ -78,11 +78,11 @@ XFEMCutElem::computeXFEMWeights(QBase * qrule, Xfem::XFEM_QRULE xfem_qrule, cons
       // As a temporary solution for negative terms on the Jacobian diagonal,
       // set the weights for integration points to zero if they are negative.
       // TODO: A better solution for this is in the works.
-      for (unsigned qp = 0; qp < qrule->n_points(); ++qp)
-      {
-        if (_new_weights[qp] < 0)
-          _new_weights[qp] = 0;
-      }
+//      for (unsigned qp = 0; qp < qrule->n_points(); ++qp)
+//      {
+//        if (_new_weights[qp] < 0)
+//          _new_weights[qp] = 0;
+//      }
       break;
     }
     case Xfem::DIRECT: // remove q-points outside the partial element's physical domain
