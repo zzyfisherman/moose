@@ -21,6 +21,12 @@
 #include "XFEMSingleVariableConstraint.h"
 #include "XFEMPressure.h"
 
+#include "PlateHoleDisp1.h"
+#include "PlateHoleDisp2.h"
+#include "PlateHoleSig11.h"
+#include "PlateHoleSig12.h"
+#include "PlateHoleSig22.h"
+
 template<>
 InputParameters validParams<XFEMApp>()
 {
@@ -77,6 +83,13 @@ XFEMApp::registerObjects(Factory & factory)
 
   //DiracKernels
   registerDiracKernel(XFEMPressure);
+
+  //Functions
+  registerFunction(PlateHoleDisp1);
+  registerFunction(PlateHoleDisp2);
+  registerFunction(PlateHoleSig11);
+  registerFunction(PlateHoleSig12);
+  registerFunction(PlateHoleSig22);
 }
 
 // External entry point for dynamic syntax association
