@@ -91,7 +91,8 @@ XFEMCutElem2D::computeMomentFittingWeights()
     solveMomentFitting(_n_nodes, _n_qpoints, elem_nodes, tsg, wsg); // get wsg - QPs from moment-fitting
     _new_weights.resize(wsg.size(), 1.0);
     for (unsigned int i = 0; i < wsg.size(); ++i)
-      _new_weights[i] = wsg[i][2]; // weight multiplier
+      _new_weights[i] = wsg[i][2]; // MF weight multiplier
+    blendWeights(); // blend MF and volfrac weights
   }
   else
     _new_weights.resize(_n_qpoints, _physical_volfrac);
@@ -416,4 +417,37 @@ XFEMCutElem2D::getIntersectionInfo(unsigned int plane_id, Point & normal, std::v
   }
 
   normal = getCutPlaneNormal(plane_id, displaced_mesh);
+}
+
+void
+XFEMCutElem2D::blendWeights()
+{
+  std::vector<Real> mf_weights(_new_weights);
+  std::vector<Real> alpha(_n_qpoints, 1.0);
+  Real eps = 1.0e-15;
+
+  // check if negative MF weights exist
+  bool has_negative = false;
+  for (unsigned int i = 0; i < _n_qpoints; ++i)
+  {
+    if (mf_weights[i] < 0.0)
+    {
+      has_negative = true;
+      break;
+    }
+  }
+
+  // blend the weights if necessary
+  if (has_negative)
+  {
+    for (unsigned int i = 0; i < _n_qpoints; ++i)
+    {
+      Real denom = mf_weights[i] - _physical_volfrac;
+      if (denom < 0.0)
+        alpha[i] = (eps - _physical_volfrac)/denom;
+    }
+    Real min_alpha = *std::min_element(alpha.begin(), alpha.end());
+    for (unsigned int i = 0; i < _n_qpoints; ++i)
+      _new_weights[i] = (1.0 - min_alpha)*_physical_volfrac + min_alpha*mf_weights[i];
+  }
 }
